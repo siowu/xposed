@@ -91,6 +91,6 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          app/build/outputs/apk/${{ github.event.inputs.buildType }}/app-${{ github.event.inputs.buildType }}.apk
+          app/build/outputs/apk/${{ github.event.inputs.buildType }}/app-${{ github.event.inputs.buildType }}-unsigned.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -77,12 +77,11 @@ jobs:
         echo "$APK_FILES" >> $GITHUB_ENV
         echo "EOF" >> $GITHUB_ENV
 
-        echo "=== 结束 ==="
         echo "GITHUB_REF: ${{ github.ref }}"
         echo "GITHUB_SHA: ${{ github.sha }}"
     
     - name: 创建 Release 并上传 APK
-      if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.buildType == 'release')
+      if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch')
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ env.tag }}

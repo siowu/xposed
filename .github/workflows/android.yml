@@ -34,7 +34,7 @@ jobs:
       if: github.event.inputs.buildType == 'release'  # 仅在 release 构建时需要
       run: |
         # 解码密钥库
-        echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > siowu.jks
+        echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > app/siowu.jks
         mkdir -p ~/.android
         echo "storeFile=$(pwd)/siowu.jks" > ~/.android/debug.keystore.properties
         echo "storePassword=${{ secrets.RELEASE_STORE_PASSWORD }}" >> ~/.android/debug.keystore.properties

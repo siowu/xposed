@@ -41,22 +41,37 @@ jobs:
     - name: Get App Version
       id: app_version
       run: |
-        # 使用 grep 和 sed 组合，兼容双引号和单引号格式
+        # 使用 heredoc 语法定义脚本，避免 YAML 引号冲突
+        SCRIPT=$(cat <<'EOF'
+        # 提取版本号（兼容单/双引号）
         VERSION=$(grep -E 'versionName\s+["\'][^"\']+["\']' app/build.gradle | sed -E 's/.*versionName\s+["\']([^"\']+)["\'].*/\1/')
         
-        # 如果提取失败，设置默认版本
+        # 错误处理
         if [ -z "$VERSION" ]; then
           VERSION="1.0.0"
           echo "警告: 无法从 build.gradle 中提取版本号，使用默认版本 $VERSION"
         fi
         
-        # 添加可选的版本后缀
+        # 添加可选后缀
         if [ ! -z "${{ github.event.inputs.versionSuffix }}" ]; then
           VERSION="${VERSION}-${{ github.event.inputs.versionSuffix }}"
         fi
         
-        echo "version=$VERSION" >> $GITHUB_ENV
-        echo "tag=v$VERSION" >> $GITHUB_ENV
+        echo "version=$VERSION"
+        echo "tag=v$VERSION"
+        EOF
+        )
+        
+        # 执行脚本并捕获输出
+        OUTPUT=$(bash -c "$SCRIPT")
+        
+        # 将输出写入环境变量
+        echo "$OUTPUT" | grep 'version=' >> $GITHUB_ENV
+        echo "$OUTPUT" | grep 'tag=' >> $GITHUB_ENV
+        
+        # 打印调试信息
+        echo "提取的版本信息:"
+        echo "$OUTPUT"
     
     # 仅在直接push到main分支或手动触发且选择release时创建Release
     - name: Create GitHub Release

@@ -30,7 +30,7 @@ jobs:
         distribution: 'temurin'
         cache: gradle
     
-    - name: 准备签名密钥
+      - name: 准备签名密钥
         if: github.event.inputs.buildType == 'release'  # 仅在 release 构建时需要
         run: |
           # 解码密钥库
@@ -56,6 +56,7 @@ jobs:
             # debug构建使用默认签名
             ./gradlew assembleDebug
           fi
+
       
     # 设置环境变量，获取版本信息
     - name: 获取版本信息

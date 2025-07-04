@@ -1,4 +1,5 @@
 # xposed
 这是一个xposed模块的模板<br>
 需要在assets文件夹下的xposed_init文件中配置入口类<br>
-需要在AndroidManifest.xml配置xposed模块相关信息
+需要在AndroidManifest.xml配置xposed模块相关信息<br>
+release版本可以在build.gradle开启Minify配置压缩安装包大小

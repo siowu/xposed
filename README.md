@@ -1,4 +1,4 @@
 # xposed
-xposed模板
-需要在assets文件夹下的xposed_init文件中配置入口类
+这是一个xposed模板<br>
+需要在assets文件夹下的xposed_init文件中配置入口类<br>
 需要在AndroidManifest.xml配置xposed模块相关信息

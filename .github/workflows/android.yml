@@ -41,11 +41,20 @@ jobs:
     - name: Get App Version
       id: app_version
       run: |
-        VERSION=$(grep "versionName" app/build.gradle | awk -F"'" '{print $2}')
+        # 使用 grep 和 sed 组合，兼容双引号和单引号格式
+        VERSION=$(grep -E 'versionName\s+["\'][^"\']+["\']' app/build.gradle | sed -E 's/.*versionName\s+["\']([^"\']+)["\'].*/\1/')
+        
+        # 如果提取失败，设置默认版本
+        if [ -z "$VERSION" ]; then
+          VERSION="1.0.0"
+          echo "警告: 无法从 build.gradle 中提取版本号，使用默认版本 $VERSION"
+        fi
+        
         # 添加可选的版本后缀
         if [ ! -z "${{ github.event.inputs.versionSuffix }}" ]; then
           VERSION="${VERSION}-${{ github.event.inputs.versionSuffix }}"
         fi
+        
         echo "version=$VERSION" >> $GITHUB_ENV
         echo "tag=v$VERSION" >> $GITHUB_ENV
     

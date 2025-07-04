@@ -1,4 +1,4 @@
-name: Android CI with Release
+name: 编译Android项目生成APK
 
 on:
   workflow_dispatch:  # 允许手动触发工作流
@@ -23,28 +23,22 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: set up JDK 17
+    - name: 初始化JDK
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
         cache: gradle
     
-    - name: Grant execute permission for gradlew
+    - name: Gradle提权
       run: chmod +x gradlew
     
     # 根据输入参数构建相应类型的APK
-    - name: Build APK
+    - name: 构建APK
       run: ./gradlew assemble${{ github.event.inputs.buildType }}
       
-    - name: Debug - 列出APK目录
-      run: |
-        echo "=== APK目录内容 ==="
-        ls -la app/build/outputs/apk/release
-        echo "=== 结束 ==="
-  
     # 设置环境变量，获取版本信息
-    - name: Get App Version
+    - name: 获取版本信息
       id: app_version
       run: |
         # 提取版本号（使用单引号命令，避免 YAML 冲突）
@@ -70,19 +64,18 @@ jobs:
         echo "version=$VERSION" >> $GITHUB_ENV
         echo "tag=v$VERSION" >> $GITHUB_ENV
         
-        # 打印调试信息
-        echo "提取的版本: $VERSION"
-        echo "生成的标签: v$VERSION"
-    
-    - name: Debug Release Info
+    - name: 准备创建 Release
       run: |
         echo "准备创建 Release:"
         echo "标签: ${{ env.tag }}"
         echo "版本: ${{ env.version }}"
+        echo "=== APK目录内容 ==="
+        ls -la app/build/outputs/apk/release
+        echo "=== 结束 ==="
         echo "GITHUB_REF: ${{ github.ref }}"
         echo "GITHUB_SHA: ${{ github.sha }}"
     
-    - name: Create GitHub Release and Upload APK
+    - name: 创建 Release 并上传 APK
       if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.buildType == 'release')
       uses: softprops/action-gh-release@v1
       with:
@@ -91,6 +84,6 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          app/build/outputs/apk/${{ github.event.inputs.buildType }}/app-${{ github.event.inputs.buildType }}-unsigned.apk
+          app/build/outputs/apk/${{ github.event.inputs.buildType }}/*.apk  # 匹配所有 APK
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

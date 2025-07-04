@@ -1,0 +1,74 @@
+name: Android CI with Release
+
+on:
+  workflow_dispatch:  # 允许手动触发工作流
+    inputs:
+      buildType:
+        description: 'Build type'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - debug
+          - release
+      versionSuffix:
+        description: 'Optional suffix for version name'
+        required: false
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: set up JDK 11
+      uses: actions/setup-java@v4
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: gradle
+    
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    
+    # 根据输入参数构建相应类型的APK
+    - name: Build APK
+      run: ./gradlew assemble${{ github.event.inputs.buildType }}
+    
+    # 设置环境变量，获取版本信息
+    - name: Get App Version
+      id: app_version
+      run: |
+        VERSION=$(grep "versionName" app/build.gradle | awk -F"'" '{print $2}')
+        # 添加可选的版本后缀
+        if [ ! -z "${{ github.event.inputs.versionSuffix }}" ]; then
+          VERSION="${VERSION}-${{ github.event.inputs.versionSuffix }}"
+        fi
+        echo "version=$VERSION" >> $GITHUB_ENV
+        echo "tag=v$VERSION" >> $GITHUB_ENV
+    
+    # 仅在直接push到main分支或手动触发且选择release时创建Release
+    - name: Create GitHub Release
+      if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.buildType == 'release')
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ env.tag }}
+        release_name: Release ${{ env.tag }}
+        draft: false
+        prerelease: false
+    
+    # 上传APK到Release
+    - name: Upload Release APK
+      if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.buildType == 'release')
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: app/build/outputs/apk/${{ github.event.inputs.buildType }}/app-${{ github.event.inputs.buildType }}.apk
+        asset_name: my-app-${{ env.version }}.apk
+        asset_content_type: application/vnd.android.package-archive

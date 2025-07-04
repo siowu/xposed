@@ -68,26 +68,23 @@ jobs:
         echo "提取的版本: $VERSION"
         echo "生成的标签: v$VERSION"
     
-    # 仅在直接push到main分支或手动触发且选择release时创建Release
-    - name: Create GitHub Release
+    - name: Debug Release Info
+      run: |
+        echo "准备创建 Release:"
+        echo "标签: ${{ env.tag }}"
+        echo "版本: ${{ env.version }}"
+        echo "GITHUB_REF: ${{ github.ref }}"
+        echo "GITHUB_SHA: ${{ github.sha }}"
+    
+    - name: Create GitHub Release and Upload APK
       if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.buildType == 'release')
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ env.tag }}
-        release_name: Release ${{ env.tag }}
+        name: Release ${{ env.tag }}
         draft: false
         prerelease: false
-    
-    # 上传APK到Release
-    - name: Upload Release APK
-      if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.buildType == 'release')
-      uses: actions/upload-release-asset@v1
+        files: |
+          app/build/outputs/apk/${{ github.event.inputs.buildType }}/app-${{ github.event.inputs.buildType }}.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: app/build/outputs/apk/${{ github.event.inputs.buildType }}/app-${{ github.event.inputs.buildType }}.apk
-        asset_name: my-app-${{ env.version }}.apk
-        asset_content_type: application/vnd.android.package-archive

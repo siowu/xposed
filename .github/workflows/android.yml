@@ -64,26 +64,19 @@ jobs:
         echo "version=$VERSION" >> $GITHUB_ENV
         echo "tag=v$VERSION" >> $GITHUB_ENV
 
-    - name: 查找构建目录下所有APK文件
-      id: find_apks
-      run: |
-        APK_FILES=$(find app/build/outputs/apk -name "*.apk" -type f -print0 | tr '\0' '\n')
-        echo "APK 文件列表:"
-        echo "$APK_FILES"
-        
-        # 将结果保存到环境变量
-        echo "apk_files<<EOF" >> $GITHUB_ENV
-        echo "$APK_FILES" >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV
-
     - name: 准备创建 Release
       run: |
         echo "准备创建 Release:"
         echo "标签: ${{ env.tag }}"
         echo "版本: ${{ env.version }}"
-        echo "=== APK目录内容 ==="
-        ls -la app/build/outputs/apk/release
-        ehco "aa:${{ env.apk_files }}"
+
+        APK_FILES=$(find app/build/outputs/apk -name "*.apk" -type f -print0 | tr '\0' '\n')
+        echo "APK 文件列表:"
+        echo "$APK_FILES"
+        echo "apk_files<<EOF" >> $GITHUB_ENV
+        echo "$APK_FILES" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+
         echo "=== 结束 ==="
         echo "GITHUB_REF: ${{ github.ref }}"
         echo "GITHUB_SHA: ${{ github.sha }}"
@@ -96,7 +89,6 @@ jobs:
         name: Release ${{ env.tag }}
         draft: false
         prerelease: false
-        files: |
-          app/build/outputs/apk/${{ github.event.inputs.buildType }}/*.apk  # 匹配所有 APK
+        files: ${{ env.apk_files }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

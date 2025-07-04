@@ -30,12 +30,32 @@ jobs:
         distribution: 'temurin'
         cache: gradle
     
-    - name: Gradle提权
-      run: chmod +x gradlew
-    
-    # 根据输入参数构建相应类型的APK
-    - name: 构建APK
-      run: ./gradlew assemble${{ github.event.inputs.buildType }}
+    - name: 准备签名密钥
+        if: github.event.inputs.buildType == 'release'  # 仅在 release 构建时需要
+        run: |
+          # 解码密钥库
+          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > siowu.jks
+          mkdir -p ~/.android
+          echo "storeFile=$(pwd)/siowu.jks" > ~/.android/debug.keystore.properties
+          echo "storePassword=${{ secrets.RELEASE_STORE_PASSWORD }}" >> ~/.android/debug.keystore.properties
+          echo "keyAlias=${{ secrets.RELEASE_KEY_ALIAS }}" >> ~/.android/debug.keystore.properties
+          echo "keyPassword=${{ secrets.RELEASE_KEY_PASSWORD }}" >> ~/.android/debug.keystore.properties
+      
+      - name: Gradle提权
+        run: chmod +x gradlew
+      
+      - name: 构建APK
+        run: |
+          if [ "${{ github.event.inputs.buildType }}" == "release" ]; then
+            # 传递签名参数给Gradle
+            ./gradlew assembleRelease \
+              -PRELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }} \
+              -PRELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }} \
+              -PRELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}
+          else
+            # debug构建使用默认签名
+            ./gradlew assembleDebug
+          fi
       
     # 设置环境变量，获取版本信息
     - name: 获取版本信息

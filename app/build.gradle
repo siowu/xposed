@@ -3,7 +3,29 @@ plugins {
 }
 
 android {
-
+    signingConfigs {
+        debug {
+            // 使用默认调试签名（无需额外配置）
+        }
+        release {
+            if (project.hasProperty('RELEASE_KEY_ALIAS')) {
+                keyAlias RELEASE_KEY_ALIAS
+                keyPassword RELEASE_KEY_PASSWORD
+                storeFile file("siowu.jks")
+                storePassword RELEASE_STORE_PASSWORD
+            }
+        }
+    }
+    buildTypes {
+        // debug {
+        //     signingConfig signingConfigs.debug
+        // }
+        release {
+            signingConfig signingConfigs.release
+            // 其他 release 配置...
+        }
+    }
+    
     namespace 'me.siowu.updatehook'
     compileSdk 35
 
